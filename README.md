@@ -1,8 +1,8 @@
-# Capistrano::Puma
+# Capistrano Puma Rake Tasks
 
 Puma Rake tasks for Capistrano >= 3.0.0
 
-These tasks have been taken directly from the puma gem
+These tasks have been taken directly from the puma gem and upgraded to Rake
 
 Includes the following commands;
 
