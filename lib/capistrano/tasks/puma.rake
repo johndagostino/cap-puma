@@ -2,16 +2,23 @@ namespace :puma do
   desc 'Start puma'
   task :start do
     on roles fetch(:puma_role) do
-      within release_path do
+      within current_path do
         execute fetch(:puma_cmd), "#{start_options}"
       end
+    end
+  end
+
+  desc 'ensure directories exist'
+  task :directories do
+    on roles fetch(:puma_role) do
+      execute :mkdir, '-pv', shared_path, "sockets"
     end
   end
 
   desc 'Stop puma'
   task :stop do
     on roles fetch(:puma_role) do
-      within release_path do
+      within current_path do
         execute fetch(:pumactl_cmd), "-S #{state_path} stop"
       end
     end
@@ -20,7 +27,7 @@ namespace :puma do
   desc 'Restart puma'
   task :restart do
     on roles fetch(:puma_role) do
-      within release_path do
+      within current_path do
         execute fetch(:pumactl_cmd), "-S #{state_path} restart"
       end
     end
@@ -29,7 +36,7 @@ namespace :puma do
   desc 'Restart puma (phased restart)'
   task :phased_restart do
     on roles fetch(:puma_role) do
-      within release_path do
+      within current_path do
         execute fetch(:pumactl_cmd), "-S #{state_path} phased-restart"
       end
     end
