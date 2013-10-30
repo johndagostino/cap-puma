@@ -42,7 +42,11 @@ namespace :puma do
   task :restart => [:defaults] do
     on roles fetch(:puma_role) do
       within current_path do
-        execute_current_path("#{fetch(:pumactl_cmd)} -S #{state_path} restart")
+        begin
+          execute_current_path("#{fetch(:pumactl_cmd)} -S #{state_path} restart")
+        rescue SSHKit::StandardError
+          Rake::Task["puma:start"].invoke
+        end
       end
     end
   end
