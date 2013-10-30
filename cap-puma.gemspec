@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "cap-puma"
-  spec.version       = '0.0.1'
+  spec.version       = '0.0.3'
   spec.authors       = ["John D'Agostino"]
   spec.email         = ["john.dagostino@gmail.com"]
   spec.description   = %q{Capistrano v3 Rake tasks for Puma}

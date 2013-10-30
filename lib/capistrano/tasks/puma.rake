@@ -1,22 +1,33 @@
 namespace :puma do
+  task :defaults do
+    set :puma_cmd, fetch(:puma_cmd, "bundle exec puma")
+    set :pumactl_cmd, fetch(:pumactl_cmd, "bundle exec pumactl")
+    set :puma_env, fetch(:puma_env, fetch(:rack_env, fetch(:rails_env, 'production')))
+    set :puma_state, fetch(:puma_state, "#{shared_path}/sockets/puma.state")
+    set :puma_socket, fetch(:puma_socket, "unix://#{shared_path}/sockets/puma.sock")
+    set :puma_role, fetch(:puma_role, :app)
+  end
+
   desc 'Start puma'
-  task :start do
+  task :start => [:defaults] do
     on roles fetch(:puma_role) do
       within current_path do
-        execute fetch(:puma_cmd), "#{start_options}"
+        with rails_env: fetch(:rails_env) do
+          execute fetch(:puma_cmd), "#{start_options}"
+        end
       end
     end
   end
 
   desc 'ensure directories exist'
-  task :directories do
+  task :directories => [:defaults] do
     on roles fetch(:puma_role) do
-      execute :mkdir, '-pv', shared_path, "sockets"
+      execute :mkdir, '-pv', File.join(shared_path, "sockets")
     end
   end
 
   desc 'Stop puma'
-  task :stop do
+  task :stop => [:defaults] do
     on roles fetch(:puma_role) do
       within current_path do
         execute fetch(:pumactl_cmd), "-S #{state_path} stop"
@@ -25,7 +36,7 @@ namespace :puma do
   end
 
   desc 'Restart puma'
-  task :restart do
+  task :restart => [:defaults] do
     on roles fetch(:puma_role) do
       within current_path do
         execute fetch(:pumactl_cmd), "-S #{state_path} restart"
@@ -34,7 +45,7 @@ namespace :puma do
   end
 
   desc 'Restart puma (phased restart)'
-  task :phased_restart do
+  task :phased_restart => [:defaults] do
     on roles fetch(:puma_role) do
       within current_path do
         execute fetch(:pumactl_cmd), "-S #{state_path} phased-restart"
@@ -77,13 +88,3 @@ namespace :puma do
   after 'deploy:finishing', 'puma:restart'
 end
 
-namespace :load do
-  task :defaults do
-    set :puma_cmd, fetch(:puma_cmd, "bundle exec puma")
-    set :pumactl_cmd, fetch(:pumactl_cmd, "bundle exec pumactl")
-    set :puma_env, fetch(:puma_env, fetch(:rack_env, fetch(:rails_env, 'production')))
-    set :puma_state, fetch(:puma_state, "#{shared_path}/sockets/puma.state")
-    set :puma_socket, fetch(:puma_socket, "unix://#{shared_path}/sockets/puma.sock")
-    set :puma_role, fetch(:puma_role, :app)
-  end
-end
