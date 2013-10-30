@@ -8,13 +8,16 @@ namespace :puma do
     set :puma_role, fetch(:puma_role, :app)
   end
 
+  # https://github.com/leehambley/sshkit/blob/master/EXAMPLES.md#run-a-command-without-it-being-command-mapped
+  def execute_current_path(cmd)
+    execute "cd #{current_path} && #{cmd}"
+  end
+
   desc 'Start puma'
   task :start => [:defaults] do
     on roles fetch(:puma_role) do
       within current_path do
-        with rails_env: fetch(:rails_env) do
-          execute fetch(:puma_cmd), "#{start_options}"
-        end
+        execute_current_path("#{fetch(:puma_cmd)} #{start_options}")
       end
     end
   end
@@ -30,7 +33,7 @@ namespace :puma do
   task :stop => [:defaults] do
     on roles fetch(:puma_role) do
       within current_path do
-        execute fetch(:pumactl_cmd), "-S #{state_path} stop"
+        execute_current_path("#{fetch(:pumactl_cmd)} -S #{state_path} stop")
       end
     end
   end
@@ -39,7 +42,7 @@ namespace :puma do
   task :restart => [:defaults] do
     on roles fetch(:puma_role) do
       within current_path do
-        execute fetch(:pumactl_cmd), "-S #{state_path} restart"
+        execute_current_path("#{fetch(:pumactl_cmd)} -S #{state_path} restart")
       end
     end
   end
@@ -48,7 +51,7 @@ namespace :puma do
   task :phased_restart => [:defaults] do
     on roles fetch(:puma_role) do
       within current_path do
-        execute fetch(:pumactl_cmd), "-S #{state_path} phased-restart"
+        execute_current_path("#{fetch(:pumactl_cmd)} -S #{state_path} phased-restart")
       end
     end
   end
