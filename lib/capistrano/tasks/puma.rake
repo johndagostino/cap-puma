@@ -8,16 +8,39 @@ namespace :puma do
     set :puma_role, fetch(:puma_role, :app)
   end
 
+  namespace :upstart do
+    desc 'Start puma using upstart'
+    task :start => [:defaults] do
+      on roles fetch(:puma_role) do
+        execute :service, 'puma', 'start', "app=#{current_path}"
+      end
+    end
+
+    desc 'Restart puma using upstart'
+    task :restart => [:defaults] do
+      on roles fetch(:puma_role) do
+        execute :service, 'puma', 'restart', "app=#{current_path}"
+      end
+    end
+
+    desc 'Stop puma using upstart'
+    task :stop => [:defaults] do
+      on roles fetch(:puma_role) do
+        execute :service, 'puma', 'stop', "app=#{current_path}"
+      end
+    end
+  end
+
   # https://github.com/leehambley/sshkit/blob/master/EXAMPLES.md#run-a-command-without-it-being-command-mapped
-  def execute_current_path(cmd)
-    execute "cd #{current_path} && #{cmd}"
+  def execute_current_path(*cmd)
+    send(:execute, *["cd", current_path.to_s, "&&"].concat(cmd))
   end
 
   desc 'Start puma'
   task :start => [:defaults] do
     on roles fetch(:puma_role) do
       within current_path do
-        execute_current_path("#{fetch(:puma_cmd)} #{start_options}")
+        execute_current_path(fetch(:puma_cmd), start_options)
       end
     end
   end
@@ -33,7 +56,7 @@ namespace :puma do
   task :stop => [:defaults] do
     on roles fetch(:puma_role) do
       within current_path do
-        execute_current_path("#{fetch(:pumactl_cmd)} -S #{state_path} stop")
+        execute_current_path(fetch(:pumactl_cmd), "-S", state_path, "stop")
       end
     end
   end
@@ -43,7 +66,7 @@ namespace :puma do
     on roles fetch(:puma_role) do
       within current_path do
         begin
-          execute_current_path("#{fetch(:pumactl_cmd)} -S #{state_path} restart")
+          execute_current_path(fetch(:pumactl_cmd), "-S", state_path, "restart")
         rescue SSHKit::StandardError
           Rake::Task["puma:start"].invoke
         end
@@ -55,7 +78,7 @@ namespace :puma do
   task :phased_restart => [:defaults] do
     on roles fetch(:puma_role) do
       within current_path do
-        execute_current_path("#{fetch(:pumactl_cmd)} -S #{state_path} phased-restart")
+        execute_current_path(fetch(:pumactl_cmd), "-S", state_path, "phased-restart")
       end
     end
   end
@@ -92,6 +115,7 @@ namespace :puma do
     config
   end
 
-  after 'deploy:finishing', 'puma:restart'
+  # after 'deploy:finishing', 'puma:upstart:restart'
+  # after 'deploy:finishing', 'puma:restart'
 end
 
